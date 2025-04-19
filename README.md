@@ -1,7 +1,7 @@
 # MongoDB Dumper
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/mongodb-dumper)](https://goreportcard.com/report/github.com/0oz/mongodb-dumper)
-[![License](https://img.shields.io/github/license/yourusername/mongodb-dumper)](https://github.com/0oz/mongodb-dumper/blob/main/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yourusername/mongodb-dumper)](https://goreportcard.com/report/github.com/0OZ/mongodb-dumper)
+[![License](https://img.shields.io/github/license/0OZ/mongodb-dumper)](https://github.com/0oz/mongodb-dumper/blob/main/LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://golang.org/doc/devel/release.html#go1.24)
 
 A robust Go application that automates MongoDB database backups to Backblaze B2 Cloud Storage (via S3 API) on a scheduled basis. Designed for reliability, flexibility, and seamless integration with modern cloud-native environments.

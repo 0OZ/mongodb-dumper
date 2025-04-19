@@ -15,7 +15,7 @@ A robust Go application that automates MongoDB database backups to Backblaze B2 
 - **Native BSON Format**: Backups stored in standard MongoDB format for easy restoration
 - **Flexible Configuration**: Configure via environment variables, command-line flags, or config files
 - **Retention Policies**: Configurable backup retention and cleanup strategies
-- **Monitoring & Alerts**: Prometheus metrics and failure notifications (optional)
+- **Detailed Logging**: Rich logging with different formats (JSON, pretty, compact, console)
 
 ## 📋 Requirements
 
@@ -32,20 +32,16 @@ The application can be configured using environment variables, command-line flag
 |----------------------|------------------|-------------------------------------------------|----------|-------------------------|
 | MONGO_URI            | --mongo-uri      | MongoDB connection string URI                   | Yes      | -                       |
 | MONGO_DATABASE       | --database       | MongoDB database to backup (empty = all DBs)    | No       | (all databases)         |
-| ENVIRONMENT          | --env            | Environment (staging or production)             | Yes      | -                       |
+| ENVIRONMENT          | --env            | Environment (staging or production)             | No       | -                       |
 | S3_ENDPOINT          | --s3-endpoint    | S3 endpoint URL for Backblaze                   | Yes      | -                       |
 | S3_REGION            | --s3-region      | S3 region                                       | Yes      | -                       |
 | S3_BUCKET            | --s3-bucket      | S3 bucket name                                  | Yes      | -                       |
 | S3_ACCESS_KEY        | --s3-access-key  | S3 access key                                   | Yes      | -                       |
 | S3_SECRET_KEY        | --s3-secret-key  | S3 secret key                                   | Yes      | -                       |
-| TEMP_DIR             | --temp-dir       | Temporary directory for backups                 | No       | /tmp                    |
+| TEMP_DIR             | --temp-dir       | Temporary directory for backups                 | No       | /tmp/mongodb-dumps      |
 | BACKUP_INTERVAL      | --interval       | Backup interval (1h, 6h, 24h)                   | No       | (one-time run)          |
 | ONE_TIME             | --one-time       | Run a single backup and exit                    | No       | false                   |
 | LOG_FORMAT           | --log-format     | Log format: json, console, pretty, compact      | No       | pretty                  |
-| LOG_LEVEL            | --log-level      | Logging level: debug, info, warn, error         | No       | info                    |
-| RETENTION_DAYS       | --retention-days | Number of days to keep backups                  | No       | 30                      |
-| METRICS_ENABLED      | --metrics        | Enable Prometheus metrics endpoint              | No       | false                   |
-| METRICS_PORT         | --metrics-port   | Port for Prometheus metrics                     | No       | 9090                    |
 | -                    | --env-file       | Path to .env file for environment variables     | No       | .env                    |
 
 ## 🏃 Running Locally
@@ -169,20 +165,20 @@ The provided Kubernetes manifest includes:
 
 ### Backup Format
 
-The backups are stored in MongoDB's archive format (BSON), which can be easily restored using the `mongorestore` command.
+The backups are stored in MongoDB's archive format (BSON), compressed as ZIP files, which can be easily restored using the `mongorestore` command.
 
 ### Backup Naming Convention
 
 Backups are stored with the following naming convention:
 
 ```
-{environment}/{date}/{database}-{environment}-{timestamp}.archive
+{environment}/{date}/{database}-{environment}-{timestamp}.zip
 ```
 
 For example:
 
-- `staging/2023-04-15/my-database-staging-2023-04-15T12-00-00Z.archive`
-- `production/2023-04-15/my-database-production-2023-04-15T12-00-00Z.archive`
+- `staging/2023-04-15/my-database-staging-2023-04-15T12-00-00Z.zip`
+- `production/2023-04-15/my-database-production-2023-04-15T12-00-00Z.zip`
 
 ### Backup Restoration
 
@@ -190,12 +186,15 @@ To restore a database from backup:
 
 ```bash
 # Download the backup from Backblaze B2
+# Unzip the backup archive
+unzip my-database-staging-2023-04-15T12-00-00Z.zip -d ./extracted-backup
+
 # Then restore using mongorestore:
-mongorestore --uri="mongodb://username:password@hostname:port" --archive=/path/to/downloaded/backup.archive
+mongorestore --uri="mongodb://username:password@hostname:port" ./extracted-backup
 
 # Restore a specific collection
 mongorestore --uri="mongodb://username:password@hostname:port/database?authSource=admin" \
-  --nsInclude="database.collection" /path/to/collection.bson
+  --nsInclude="database.collection" ./extracted-backup
 ```
 
 ## 🧪 Testing
@@ -211,18 +210,6 @@ Run integration tests (requires local MongoDB instance):
 ```bash
 go test -v -tags=integration ./...
 ```
-
-## 📊 Monitoring
-
-When metrics are enabled, MongoDB Dumper exposes Prometheus metrics at `/metrics` on the configured port (default: 9090).
-
-Key metrics available:
-
-- `mongodb_dumper_backup_total` - Total number of backups attempted
-- `mongodb_dumper_backup_success_total` - Successful backups
-- `mongodb_dumper_backup_failure_total` - Failed backups
-- `mongodb_dumper_backup_duration_seconds` - Backup duration in seconds
-- `mongodb_dumper_upload_size_bytes` - Size of uploaded backup archives
 
 ## 🔒 Security Considerations
 

@@ -1,0 +1,5 @@
+./dist
+./bin
+./bin/*
+./bin/dumper
+./bin/dumper/*
